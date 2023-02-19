@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace = "dev.mvc.notice.NoticeDAOInter">
+
+<insert id="create" parameterType="dev.mvc.notice.NoticeVO">
+<selectKey keyProperty="notice_no" resultType="int" order="BEFORE">
+            SELECT notice_seq.nextval FROM dual
+</selectKey>
+INSERT INTO notice(notice_no, adminno, notice_title, notice_content, notice_word, notice_rdate, notice_udate)
+VALUES(#{notice_no}, #{adminno}, #{notice_title}, #{notice_content}, #{notice_word}, sysdate, sysdate)
+</insert>
+<insert id="add_file" parameterType="dev.mvc.notice.NoticeFileVO">
+INSERT INTO notice_file(notice_file_no, notice_no, file_og, file_save, file_size)
+VALUES(notice_file_seq.nextval, #{notice_no}, #{file_og}, #{file_save}, #{file_size})
+</insert>
+<select id="list_all" resultType = "dev.mvc.notice.NoticeVO">
+SELECT notice_no, notice_title, notice_content, notice_word, notice_rdate, notice_cnt FROM notice ORDER BY notice_rdate DESC
+</select>
+<select id="read" parameterType="integer" resultType = "dev.mvc.notice.NoticeVO">
+SELECT notice_no, adminno, notice_title, notice_content, notice_word, notice_rdate, notice_udate, notice_cnt FROM notice WHERE notice_no = #{notice_no}
+</select>
+<update id="count" parameterType="int">
+UPDATE notice SET notice_cnt = notice_cnt+1 WHERE notice_no = #{notice_no}
+</update>
+<select id="read_file" parameterType="integer" resultType = "dev.mvc.notice.NoticeFileVO">
+SELECT notice_file_no, notice_no, file_og, file_save, file_size FROM notice_file WHERE notice_no = #{notice_no}
+</select>
+<delete id="delete" parameterType="integer">
+DELETE FROM notice WHERE notice_no = #{notice_no}
+</delete>
+<delete id="delete_file" parameterType="integer">
+DELETE FROM notice_file WHERE notice_no = #{notice_no}
+</delete>
+<delete id="delete_file_reminders" parameterType="Map">
+DELETE FROM notice_file WHERE notice_no = #{notice_no} AND notice_file_no NOT IN 
+<foreach collection="keepFileNos" item="file_no" open="(" close=")" separator=",">
+#{file_no}
+</foreach>
+</delete>
+<update id="update" parameterType="dev.mvc.notice.NoticeVO">
+UPDATE notice SET notice_title = #{notice_title},notice_content=#{notice_content}, notice_word=#{notice_word}, notice_udate=sysdate WHERE notice_no = #{notice_no}
+</update>
+<update id="update_file" parameterType="dev.mvc.notice.NoticeFileVO">
+UPDATE notice_file SET file_og = #{file_og}, file_save = #{file_save}, file_size=#{file_size} WHERE notice_file_no = #{notice_file_no}
+</update>
+<delete id="delete_file_no" parameterType="integer">
+DELETE FROM notice_file WHERE notice_file_no = #{notice_file_no}
+</delete>
+
+<select id="list_all_search_paging" resultType="dev.mvc.notice.NoticeVO" parameterType="HashMap">
+   SELECT notice_no, notice_title, notice_content, notice_word, notice_rdate, notice_cnt, r
+   FROM (
+              SELECT notice_no, notice_title, notice_content, notice_word, notice_rdate, notice_cnt, rownum as r
+              FROM (
+                        SELECT notice_no, notice_title, notice_content, notice_word, notice_rdate, notice_cnt
+                        FROM notice
+                        <choose>
+                          <when test="word == null or word == ''"> <!-- 검색하지 않는 경우 -->
+                          </when>
+                          <otherwise>
+                            WHERE (UPPER(notice_title) LIKE '%' || #{word} || '%' 
+                                      OR UPPER(notice_content) LIKE '%' || #{word} || '%' 
+                                      OR UPPER(notice_word) LIKE '%' || #{word} || '%')
+                          </otherwise>
+                        </choose>
+                        ORDER BY notice_rdate DESC
+               )
+    )
+    WHERE <![CDATA[ r >= #{start_num} AND r <= #{end_num} ]]>
+     
+    <!--  1 page: WHERE r >= 1 AND r <= 10; 
+            2 page: WHERE r >= 11 AND r <= 20;
+            3 page: WHERE r >= 21 AND r <= 30; -->
+     
+</select>
+<select id="search_count" resultType="integer" parameterType="Map">
+SELECT count(1) FROM notice
+<choose>
+<when test="word == null or word == ''">
+</when>
+<otherwise>
+WHERE (UPPER(notice_title) LIKE '%' || #{word} || '%' 
+          OR UPPER(notice_content) LIKE '%' || #{word} || '%' 
+          OR UPPER(notice_word) LIKE '%' || #{word} || '%')
+</otherwise>
+</choose>
+</select>
+</mapper>

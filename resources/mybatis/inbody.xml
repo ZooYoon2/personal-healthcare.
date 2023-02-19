@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+<mapper namespace = "dev.mvc.inbody.InbodyDAOInter">
+  
+<!-- 신체정보 입력 -->
+  <insert id="create" parameterType="dev.mvc.inbody.InbodyVO">
+	INSERT INTO inbody(inbody_no, member_no, inbody_age, inbody_gender, inbody_height, inbody_weight, inbody_bodywater, inbody_protein, inbody_minerals, inbody_muscle, inbody_bodyfat, inbody_bmi, inbody_bodyfat_per, inbody_date)
+	VALUES (INBODY_SEQ.nextval, #{member_no}, #{inbody_age}, #{inbody_gender}, #{inbody_height},#{inbody_weight}, #{inbody_bodywater}, #{inbody_protein}, #{inbody_minerals}, #{inbody_muscle}, #{inbody_bodyfat}, #{inbody_bmi}, #{inbody_bodyfat_per}, sysdate)
+ </insert>
+
+<!-- 신체정보리스트 조회 -->
+  <select id="list" resultType="dev.mvc.inbody.InbodyVO">
+  	select member_no, inbody_age, inbody_gender, inbody_height, inbody_weight, inbody_date 
+	from inbody
+	order by member_no ASC
+  </select>
+ 
+ <!--member_no로 신체정보 조회 -->
+  <select id="read" resultType="dev.mvc.inbody.InbodyVO" parameterType="int">
+    SELECT inbody_age, inbody_gender, inbody_height, inbody_weight, inbody_bodywater, inbody_protein, inbody_minerals, inbody_muscle, inbody_bodyfat, inbody_bmi, inbody_bodyfat_per
+    FROM inbody
+    WHERE member_no = #{memberno}
+  </select>  
+  
+<!-- 신체정보 수정 -->
+  <update id="update" parameterType="dev.mvc.inbody.InbodyVO">
+	UPDATE inbody
+	SET inbody_age=#{inbody_age}, inbody_gender=#{inbody_gender}, inbody_height=#{inbody_height}, inbody_weight=#{inbody_weight}, inbody_bodywater=#{inbody_bodywater}, inbody_protein=#{inbody_protein}, inbody_minerals=#{inbody_minerals}, inbody_muscle=#{inbody_muscle}, inbody_bodyfat=#{inbody_bodyfat}, inbody_bmi=#{inbody_bmi}, inbody_bodyfat_per=#{inbody_bodyfat_per}
+	WHERE member_no = #{member_no}
+  </update>
+  
+<!-- 삭제 -->
+  <delete id="delete" parameterType="int">
+    DELETE FROM inbody
+    WHERE member_no=#{member_no}
+  </delete>
+
+                   
+</mapper>
+

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ 
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+<mapper namespace="dev.mvc.exercise_record.ExerciseRecordDAOInter">
+  <insert id="create_time" parameterType="dev.mvc.exercise_record.ExerciseRecordVO">
+    INSERT INTO exercise_record(exercise_record_no, exercise_no, memberno, exercise_record_date, exercise_record_time,
+    exercise_record_setof, exercise_record_repeat)
+    VALUES(exercise_record_seq.nextval, #{exercise_no}, #{memberno}, TO_DATE(#{exercise_record_date}, 'YYYY-MM-DD'), #{exercise_record_time}, NULL, NULL)
+  </insert>
+  
+  <insert id="create_repeat" parameterType="dev.mvc.exercise_record.ExerciseRecordVO">
+    INSERT INTO exercise_record(exercise_record_no, exercise_no, memberno, exercise_record_date, exercise_record_time,
+    exercise_record_setof, exercise_record_repeat)
+    VALUES(exercise_record_seq.nextval, #{exercise_no}, #{memberno}, TO_DATE(#{exercise_record_date}, 'YYYY-MM-DD'), NULL, #{exercise_record_setof}, #{exercise_record_repeat})
+  </insert>
+  
+  <select id="read" parameterType="integer" resultType="dev.mvc.exercise_record.ExerciseRecordVO">
+    SELECT r.exercise_record_no, r.exercise_no, r.memberno, TO_CHAR(r.exercise_record_date,'YYYY-MM-DD'), 
+       r.exercise_record_time, r.exercise_record_setof, r.exercise_record_repeat,
+       e.exercise_name
+    FROM exercise_record r, exercise e
+    WHERE r.exercise_record_no = #{exercise_record_no} AND r.exercise_no = e.exercise_no
+  </select> 
+  
+   <select id="list" resultType="dev.mvc.exercise_record.ExerciseRecordVO">
+    SELECT r.exercise_record_no, r.exercise_no, r.memberno, TO_CHAR(r.exercise_record_date,'YYYY-MM-DD'), 
+       r.exercise_record_time, r.exercise_record_setof, r.exercise_record_repeat,
+       e.exercise_name
+				FROM exercise_record r, exercise e
+				WHERE r.exercise_no = e.exercise_no
+				ORDER BY exercise_record_no
+  </select> 
+  
+  <select id="daily_list" parameterType="HashMap" resultType="dev.mvc.exercise_record.ExerciseRecordVO">
+    SELECT r.exercise_record_no, r.exercise_no, r.memberno, TO_CHAR(r.exercise_record_date,'YYYY-MM-DD'), 
+       r.exercise_record_time, r.exercise_record_setof, r.exercise_record_repeat,
+       e.exercise_name
+        FROM exercise_record r, exercise e
+        WHERE r.exercise_no = e.exercise_no AND r.exercise_record_date = TO_DATE(#{date}, 'YYYY-MM-DD') AND r.memberno = #{memberno}
+        ORDER BY exercise_record_no DESC
+  </select> 
+  
+  <insert id="update_time" parameterType="dev.mvc.exercise_record.ExerciseRecordVO">
+    UPDATE exercise_record SET exercise_no = #{exercise_no}, exercise_record_time = #{exercise_record_time}
+    WHERE exercise_record_no = #{exercise_record_no}
+  </insert>
+  
+  <insert id="update_repeat" parameterType="dev.mvc.exercise_record.ExerciseRecordVO">
+    UPDATE exercise_record SET exercise_no = #{exercise_no}, exercise_record_setof = #{exercise_record_setof}, exercise_record_repeat = #{exercise_record_repeat}
+    WHERE exercise_record_no = #{exercise_record_no}
+  </insert>
+  
+  <delete id="delete" parameterType="integer">
+    DELETE FROM exercise_record WHERE exercise_record_no = #{exercise_record_no}
+  </delete>
+  
+    <!-- 모든 운동 출력 (운동번호, 운동종류(이름), 운동명) -->
+  <select id="exercise_list_streamline" resultType="java.util.HashMap" parameterType="HashMap">
+    SELECT exercise_no, exercise_type_name, exercise_name, r
+    FROM (
+		    SELECT exercise_no, exercise_type_name, exercise_name, rownum as r
+		    FROM (
+		               SELECT exer.exercise_no, extp.exercise_type_name, exer.exercise_name
+		               FROM exercise exer, exertype extp
+		               WHERE exer.exercise_type_no = extp.exercise_type_no
+		               <choose>
+		                          <when test="word == null or word == ''"> <!-- 검색하지 않는 경우 -->
+		                          </when>
+		                          <otherwise>
+		                            AND ( UPPER(exer.exercise_name) LIKE '%' || #{word} || '%')
+		                          </otherwise>
+		               </choose>
+		               ORDER BY exer.exercise_no DESC
+		               )
+		    )
+    WHERE <![CDATA[ r >= #{start_num} AND r <= #{end_num} ]]>
+  </select> 
+  <select id="search_count" resultType="integer" parameterType="HashMap">
+SELECT count(1) FROM exercise
+<choose>
+<when test="word == null or word == ''">
+</when>
+<otherwise>
+WHERE ( UPPER(exercise_name) LIKE '%' || #{word} || '%')
+</otherwise>
+</choose>
+</select>
+</mapper>
